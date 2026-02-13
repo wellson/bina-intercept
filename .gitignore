@@ -7,8 +7,6 @@
 .buildlog/
 .history
 
-
-
 # Flutter repo-specific
 /bin/cache/
 /bin/internal/bootstrap.bat
@@ -122,3 +120,6 @@ app.*.symbols
 .dart_tool
 .gitcomando.sh
 .
+
+# FVM Version Cache
+.fvm/
