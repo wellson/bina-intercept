@@ -131,3 +131,7 @@ app.*.symbols
 .vscode
 .DS_Store
 t
+.fvmrc
+.metadata
+gitcomando.sh
+modules.xml
