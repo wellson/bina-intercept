@@ -4,11 +4,11 @@
 
 ## Objetivo aplicativo
 
-O objetivo do **#bina-intercept** é capturar e registrar automaticamente informações de chamadas recebidas para alimentar seu CRM com leads qualificados.
+O objetivo do **bina-intercept** é capturar e registrar automaticamente informações de chamadas recebidas para alimentar seu CRM com leads qualificados.
 
 ## Como Funciona
 
-O aplicativo funciona da seguinte maneira: toda vez que alguém realiza uma ligação para o seu telefone, o #bina-intercept intercepta e registra automaticamente o número do chamador dentro do próprio aplicativo. Esses dados ficam armazenados temporariamente até serem sincronizados.
+O aplicativo funciona da seguinte maneira: toda vez que alguém realiza uma ligação para o seu telefone, o bina-intercept intercepta e registra automaticamente o número do chamador dentro do próprio aplicativo. Esses dados ficam armazenados temporariamente até serem sincronizados.
 
 Posteriormente, através de uma integração via API, todos os números capturados são enviados de forma automática para um servidor central. Uma vez no servidor, essas informações alimentam diretamente o seu sistema de CRM (Customer Relationship Management), transformando cada ligação recebida em um lead potencial.
 
