@@ -123,3 +123,10 @@ app.*.symbols
 
 # FVM Version Cache
 .fvm/
+
+.gitcomando.sh
+.history
+.fvm
+.idea
+.vscode
+.DS_Store
