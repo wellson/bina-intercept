@@ -2,7 +2,7 @@
 
 
 
-## Objetivo
+## Objetivo aplicativo
 
 O objetivo do **#bina-intercept** é capturar e registrar automaticamente informações de chamadas recebidas para alimentar seu CRM com leads qualificados.
 
