@@ -1,4 +1,4 @@
-# bina-intercept
+# Bina Intercept
 
 
 
