@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bina Intercept'),
+        title: const Text('Bina Digital'),
       ),
       body: BlocBuilder<CallCubit, CallState>(
         builder: (context, state) {
