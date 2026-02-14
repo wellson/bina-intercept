@@ -5,9 +5,15 @@ import 'core/routes/app_router.dart';
 import 'features/calls/data/datasources/call_interceptor_service.dart';
 import 'features/calls/presentation/cubit/call_cubit.dart';
 
+import 'core/services/background_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
+  
+  // Initialize Background Service
+  await initializeBackgroundService();
+  
   di.sl<CallInterceptorService>().initialize();
   runApp(const MyApp());
 }
