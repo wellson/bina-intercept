@@ -5,4 +5,6 @@ abstract class CallRepository {
   Stream<List<CallLog>> watchCalls();
   Future<void> addCall(CallLog call);
   Future<void> deleteCall(int id);
+  Future<void> updateSyncStatus(int id, bool isSynced);
+  Future<void> deleteAllCalls();
 }

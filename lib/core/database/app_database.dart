@@ -11,6 +11,8 @@ class Calls extends Table {
   TextColumn get phoneNumber => text()();
   TextColumn get source => text()(); // 'cellular' or 'whatsapp'
   DateTimeColumn get timestamp => dateTime()();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
+  TextColumn get lastError => text().nullable()();
 }
 
 @DriftDatabase(tables: [Calls])
@@ -18,7 +20,24 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 2) {
+          await m.addColumn(calls, calls.isSynced);
+        }
+        if (from < 3) {
+          await m.addColumn(calls, calls.lastError);
+        }
+      },
+    );
+  }
 
   Future<int> insertCall(CallsCompanion entry) {
     return into(calls).insert(entry);
@@ -38,6 +57,19 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> deleteCall(int id) {
     return (delete(calls)..where((t) => t.id.equals(id))).go();
+  }
+
+  Future<void> updateCallSyncStatus(int id, bool isSynced, {String? lastError}) {
+    return (update(calls)..where((t) => t.id.equals(id))).write(
+      CallsCompanion(
+        isSynced: Value(isSynced),
+        lastError: Value(lastError),
+      ),
+    );
+  }
+
+  Future<int> deleteAllCalls() {
+    return delete(calls).go();
   }
 }
 

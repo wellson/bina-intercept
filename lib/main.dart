@@ -5,9 +5,15 @@ import 'core/routes/app_router.dart';
 import 'features/calls/data/datasources/call_interceptor_service.dart';
 import 'features/calls/presentation/cubit/call_cubit.dart';
 
+import 'core/services/background_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
+  
+  // Initialize Background Service
+  await initializeBackgroundService();
+  
   di.sl<CallInterceptorService>().initialize();
   runApp(const MyApp());
 }
@@ -22,7 +28,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => di.sl<CallCubit>()),
       ],
       child: MaterialApp.router(
-        title: 'Bina Intercept',
+        title: 'Bina Digital',
         theme: ThemeData(
           primarySwatch: Colors.blue,
           useMaterial3: true,

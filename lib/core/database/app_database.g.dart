@@ -52,8 +52,41 @@ class $CallsTable extends Calls with TableInfo<$CallsTable, Call> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _isSyncedMeta = const VerificationMeta(
+    'isSynced',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, phoneNumber, source, timestamp];
+  late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
+    'is_synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _lastErrorMeta = const VerificationMeta(
+    'lastError',
+  );
+  @override
+  late final GeneratedColumn<String> lastError = GeneratedColumn<String>(
+    'last_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    phoneNumber,
+    source,
+    timestamp,
+    isSynced,
+    lastError,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -96,6 +129,18 @@ class $CallsTable extends Calls with TableInfo<$CallsTable, Call> {
     } else if (isInserting) {
       context.missing(_timestampMeta);
     }
+    if (data.containsKey('is_synced')) {
+      context.handle(
+        _isSyncedMeta,
+        isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta),
+      );
+    }
+    if (data.containsKey('last_error')) {
+      context.handle(
+        _lastErrorMeta,
+        lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
+      );
+    }
     return context;
   }
 
@@ -121,6 +166,14 @@ class $CallsTable extends Calls with TableInfo<$CallsTable, Call> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}timestamp'],
       )!,
+      isSynced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_synced'],
+      )!,
+      lastError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_error'],
+      ),
     );
   }
 
@@ -135,11 +188,15 @@ class Call extends DataClass implements Insertable<Call> {
   final String phoneNumber;
   final String source;
   final DateTime timestamp;
+  final bool isSynced;
+  final String? lastError;
   const Call({
     required this.id,
     required this.phoneNumber,
     required this.source,
     required this.timestamp,
+    required this.isSynced,
+    this.lastError,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -148,6 +205,10 @@ class Call extends DataClass implements Insertable<Call> {
     map['phone_number'] = Variable<String>(phoneNumber);
     map['source'] = Variable<String>(source);
     map['timestamp'] = Variable<DateTime>(timestamp);
+    map['is_synced'] = Variable<bool>(isSynced);
+    if (!nullToAbsent || lastError != null) {
+      map['last_error'] = Variable<String>(lastError);
+    }
     return map;
   }
 
@@ -157,6 +218,10 @@ class Call extends DataClass implements Insertable<Call> {
       phoneNumber: Value(phoneNumber),
       source: Value(source),
       timestamp: Value(timestamp),
+      isSynced: Value(isSynced),
+      lastError: lastError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastError),
     );
   }
 
@@ -170,6 +235,8 @@ class Call extends DataClass implements Insertable<Call> {
       phoneNumber: serializer.fromJson<String>(json['phoneNumber']),
       source: serializer.fromJson<String>(json['source']),
       timestamp: serializer.fromJson<DateTime>(json['timestamp']),
+      isSynced: serializer.fromJson<bool>(json['isSynced']),
+      lastError: serializer.fromJson<String?>(json['lastError']),
     );
   }
   @override
@@ -180,6 +247,8 @@ class Call extends DataClass implements Insertable<Call> {
       'phoneNumber': serializer.toJson<String>(phoneNumber),
       'source': serializer.toJson<String>(source),
       'timestamp': serializer.toJson<DateTime>(timestamp),
+      'isSynced': serializer.toJson<bool>(isSynced),
+      'lastError': serializer.toJson<String?>(lastError),
     };
   }
 
@@ -188,11 +257,15 @@ class Call extends DataClass implements Insertable<Call> {
     String? phoneNumber,
     String? source,
     DateTime? timestamp,
+    bool? isSynced,
+    Value<String?> lastError = const Value.absent(),
   }) => Call(
     id: id ?? this.id,
     phoneNumber: phoneNumber ?? this.phoneNumber,
     source: source ?? this.source,
     timestamp: timestamp ?? this.timestamp,
+    isSynced: isSynced ?? this.isSynced,
+    lastError: lastError.present ? lastError.value : this.lastError,
   );
   Call copyWithCompanion(CallsCompanion data) {
     return Call(
@@ -202,6 +275,8 @@ class Call extends DataClass implements Insertable<Call> {
           : this.phoneNumber,
       source: data.source.present ? data.source.value : this.source,
       timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
+      isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
+      lastError: data.lastError.present ? data.lastError.value : this.lastError,
     );
   }
 
@@ -211,13 +286,16 @@ class Call extends DataClass implements Insertable<Call> {
           ..write('id: $id, ')
           ..write('phoneNumber: $phoneNumber, ')
           ..write('source: $source, ')
-          ..write('timestamp: $timestamp')
+          ..write('timestamp: $timestamp, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('lastError: $lastError')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, phoneNumber, source, timestamp);
+  int get hashCode =>
+      Object.hash(id, phoneNumber, source, timestamp, isSynced, lastError);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -225,7 +303,9 @@ class Call extends DataClass implements Insertable<Call> {
           other.id == this.id &&
           other.phoneNumber == this.phoneNumber &&
           other.source == this.source &&
-          other.timestamp == this.timestamp);
+          other.timestamp == this.timestamp &&
+          other.isSynced == this.isSynced &&
+          other.lastError == this.lastError);
 }
 
 class CallsCompanion extends UpdateCompanion<Call> {
@@ -233,17 +313,23 @@ class CallsCompanion extends UpdateCompanion<Call> {
   final Value<String> phoneNumber;
   final Value<String> source;
   final Value<DateTime> timestamp;
+  final Value<bool> isSynced;
+  final Value<String?> lastError;
   const CallsCompanion({
     this.id = const Value.absent(),
     this.phoneNumber = const Value.absent(),
     this.source = const Value.absent(),
     this.timestamp = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.lastError = const Value.absent(),
   });
   CallsCompanion.insert({
     this.id = const Value.absent(),
     required String phoneNumber,
     required String source,
     required DateTime timestamp,
+    this.isSynced = const Value.absent(),
+    this.lastError = const Value.absent(),
   }) : phoneNumber = Value(phoneNumber),
        source = Value(source),
        timestamp = Value(timestamp);
@@ -252,12 +338,16 @@ class CallsCompanion extends UpdateCompanion<Call> {
     Expression<String>? phoneNumber,
     Expression<String>? source,
     Expression<DateTime>? timestamp,
+    Expression<bool>? isSynced,
+    Expression<String>? lastError,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (phoneNumber != null) 'phone_number': phoneNumber,
       if (source != null) 'source': source,
       if (timestamp != null) 'timestamp': timestamp,
+      if (isSynced != null) 'is_synced': isSynced,
+      if (lastError != null) 'last_error': lastError,
     });
   }
 
@@ -266,12 +356,16 @@ class CallsCompanion extends UpdateCompanion<Call> {
     Value<String>? phoneNumber,
     Value<String>? source,
     Value<DateTime>? timestamp,
+    Value<bool>? isSynced,
+    Value<String?>? lastError,
   }) {
     return CallsCompanion(
       id: id ?? this.id,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       source: source ?? this.source,
       timestamp: timestamp ?? this.timestamp,
+      isSynced: isSynced ?? this.isSynced,
+      lastError: lastError ?? this.lastError,
     );
   }
 
@@ -290,6 +384,12 @@ class CallsCompanion extends UpdateCompanion<Call> {
     if (timestamp.present) {
       map['timestamp'] = Variable<DateTime>(timestamp.value);
     }
+    if (isSynced.present) {
+      map['is_synced'] = Variable<bool>(isSynced.value);
+    }
+    if (lastError.present) {
+      map['last_error'] = Variable<String>(lastError.value);
+    }
     return map;
   }
 
@@ -299,7 +399,9 @@ class CallsCompanion extends UpdateCompanion<Call> {
           ..write('id: $id, ')
           ..write('phoneNumber: $phoneNumber, ')
           ..write('source: $source, ')
-          ..write('timestamp: $timestamp')
+          ..write('timestamp: $timestamp, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('lastError: $lastError')
           ..write(')'))
         .toString();
   }
@@ -322,6 +424,8 @@ typedef $$CallsTableCreateCompanionBuilder =
       required String phoneNumber,
       required String source,
       required DateTime timestamp,
+      Value<bool> isSynced,
+      Value<String?> lastError,
     });
 typedef $$CallsTableUpdateCompanionBuilder =
     CallsCompanion Function({
@@ -329,6 +433,8 @@ typedef $$CallsTableUpdateCompanionBuilder =
       Value<String> phoneNumber,
       Value<String> source,
       Value<DateTime> timestamp,
+      Value<bool> isSynced,
+      Value<String?> lastError,
     });
 
 class $$CallsTableFilterComposer extends Composer<_$AppDatabase, $CallsTable> {
@@ -356,6 +462,16 @@ class $$CallsTableFilterComposer extends Composer<_$AppDatabase, $CallsTable> {
 
   ColumnFilters<DateTime> get timestamp => $composableBuilder(
     column: $table.timestamp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastError => $composableBuilder(
+    column: $table.lastError,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -388,6 +504,16 @@ class $$CallsTableOrderingComposer
     column: $table.timestamp,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CallsTableAnnotationComposer
@@ -412,6 +538,12 @@ class $$CallsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get timestamp =>
       $composableBuilder(column: $table.timestamp, builder: (column) => column);
+
+  GeneratedColumn<bool> get isSynced =>
+      $composableBuilder(column: $table.isSynced, builder: (column) => column);
+
+  GeneratedColumn<String> get lastError =>
+      $composableBuilder(column: $table.lastError, builder: (column) => column);
 }
 
 class $$CallsTableTableManager
@@ -446,11 +578,15 @@ class $$CallsTableTableManager
                 Value<String> phoneNumber = const Value.absent(),
                 Value<String> source = const Value.absent(),
                 Value<DateTime> timestamp = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
               }) => CallsCompanion(
                 id: id,
                 phoneNumber: phoneNumber,
                 source: source,
                 timestamp: timestamp,
+                isSynced: isSynced,
+                lastError: lastError,
               ),
           createCompanionCallback:
               ({
@@ -458,11 +594,15 @@ class $$CallsTableTableManager
                 required String phoneNumber,
                 required String source,
                 required DateTime timestamp,
+                Value<bool> isSynced = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
               }) => CallsCompanion.insert(
                 id: id,
                 phoneNumber: phoneNumber,
                 source: source,
                 timestamp: timestamp,
+                isSynced: isSynced,
+                lastError: lastError,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

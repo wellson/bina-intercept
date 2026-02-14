@@ -19,7 +19,16 @@ class CallReceiver : BroadcastReceiver() {
                      return
                 }
 
-                MainActivity.sendCallEvent(incomingNumber, "cellular")
+                // Try to send to UI if active
+                if (MainActivity.channel != null) {
+                    MainActivity.sendCallEvent(incomingNumber, "cellular")
+                } else {
+                    Log.d("BinaIntercept", "UI channel is null, saving to SharedPrefs for background service")
+                    // Save to SharedPrefs for Background Service to pick up
+                    val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+                    prefs.edit().putString("flutter.background_incoming_call", incomingNumber).apply()
+                    prefs.edit().putLong("flutter.background_incoming_call_timestamp", System.currentTimeMillis()).apply()
+                }
             }
         }
     }
