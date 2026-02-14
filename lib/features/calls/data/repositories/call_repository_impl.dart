@@ -17,6 +17,8 @@ class CallRepositoryImpl implements CallRepository {
       phoneNumber: c.phoneNumber,
       source: c.source == 'whatsapp' ? CallSource.whatsapp : CallSource.cellular,
       timestamp: c.timestamp,
+      isSynced: c.isSynced,
+      lastError: c.lastError,
     )).toList();
   }
 
@@ -27,6 +29,8 @@ class CallRepositoryImpl implements CallRepository {
           phoneNumber: c.phoneNumber,
           source: c.source == 'whatsapp' ? CallSource.whatsapp : CallSource.cellular,
           timestamp: c.timestamp,
+          isSynced: c.isSynced,
+          lastError: c.lastError,
         )).toList());
   }
 
@@ -37,6 +41,8 @@ class CallRepositoryImpl implements CallRepository {
         phoneNumber: Value(call.phoneNumber),
         source: Value(call.source == CallSource.whatsapp ? 'whatsapp' : 'cellular'),
         timestamp: Value(call.timestamp),
+        isSynced: Value(call.isSynced),
+        lastError: const Value(null),
       ),
     );
   }
@@ -44,5 +50,15 @@ class CallRepositoryImpl implements CallRepository {
   @override
   Future<void> deleteCall(int id) async {
     await _database.deleteCall(id);
+  }
+
+  @override
+  Future<void> updateSyncStatus(int id, bool isSynced) async {
+    await _database.updateCallSyncStatus(id, isSynced);
+  }
+
+  @override
+  Future<void> deleteAllCalls() async {
+    await _database.deleteAllCalls();
   }
 }

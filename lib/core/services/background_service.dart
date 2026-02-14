@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:drift/drift.dart';
 import '../database/app_database.dart';
+import 'sync_service.dart';
 
 Future<void> initializeBackgroundService() async {
   final service = FlutterBackgroundService();
@@ -14,7 +15,7 @@ Future<void> initializeBackgroundService() async {
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'my_foreground', // id
     'Bina Intercept Service', // title
-    description: 'This channel is used for important notifications.', // description
+    description: 'Este canal é usado para notificações importantes do serviço.', // description
     importance: Importance.low, // importance must be at low or higher level
   );
 
@@ -84,6 +85,8 @@ void onStart(ServiceInstance service) async {
     });
   }
 
+  bool isSyncing = false;
+
   // bring to foreground
   Timer.periodic(const Duration(seconds: 2), (timer) async {
     if (service is AndroidServiceInstance) {
@@ -124,6 +127,20 @@ void onStart(ServiceInstance service) async {
       debugPrint('Error accessing shared prefs: $e');
     }
     
-    debugPrint('Bina Intercept Service is running: ${DateTime.now()}');
+    debugPrint('Serviço Bina Intercept rodando: ${DateTime.now()}');
+    
+    // Trigger Sync - Prevent Overlap
+    if (!isSyncing) {
+      isSyncing = true;
+      try {
+        await SyncService().performSync();
+      } catch (e) {
+        debugPrint('Background Service: Sync error: $e');
+      } finally {
+        isSyncing = false;
+      }
+    } else {
+      debugPrint('Background Service: Sync skipped - previous sync still in progress.');
+    }
   });
 }
